@@ -58,6 +58,43 @@ poisson = Distribution::Poisson.new(l) # Using Distribution alias.
 normal = RubyStatistics::Distribution::StandardNormal.new # Using all namespaces.
 ```
 
+### Bernoulli confidence sequence
+
+For a stream of Bernoulli outcomes (e.g. success/failure events on a
+dashboard), a fixed-sample confidence interval cannot be re-evaluated every
+time a new event arrives. `RubyStatistics::BernoulliConfidenceSequence` instead
+builds an e-process from a likelihood ratio against a *pre-specified* mixture
+of Beta priors and inverts its accepted set after every observation. By
+Ville's inequality the resulting intervals `C_n` satisfy
+
+```
+P_p(p belongs to C_n for EVERY n) >= 1 - alpha
+```
+
+so the guarantee holds along the entire time path and for arbitrary stopping
+rules, not for one fixed sample size. Only the running success/failure counts
+are stored; every computation is done in the log domain and all-success,
+all-failure and p = 0/1 prefixes are handled exactly. The object is a
+frequentist confidence sequence, not the credible interval of the Beta prior.
+
+```ruby
+require 'ruby-statistics'
+
+# alpha and the Beta mixture must be fixed before observing any data and
+# cannot silently change afterwards.
+cs = RubyStatistics::BernoulliConfidenceSequence.new(
+  alpha: 0.05,
+  mixture_prior: [{ weight: 1.0, alpha: 1.0, beta: 1.0 }] # uniform mixture
+)
+
+# Each incoming event refreshes the prefix.
+cs.observe(1) # success
+cs.observe(0) # failure
+lower, upper = cs.interval # interval freshly inverted for the current prefix
+
+cs.result # { lower:, upper:, n:, successes:, failures:, alpha:, mixture_prior: }
+```
+
 ## Documentation
 You can find a bit more detailed documentation of all available distributions, tests and functions in the [Documentation Index](https://github.com/estebanz01/ruby-statistics/wiki)
 
