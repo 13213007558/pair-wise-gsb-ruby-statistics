@@ -58,6 +58,34 @@ poisson = Distribution::Poisson.new(l) # Using Distribution alias.
 normal = RubyStatistics::Distribution::StandardNormal.new # Using all namespaces.
 ```
 
+### Wilcoxon signed-rank test (paired samples)
+
+`RubyStatistics::StatisticalTest::WilcoxonSignedRankTest` tests paired
+differences `x_i - y_i` measured on the same subjects (or a single sample of
+differences), unlike `WilcoxonRankSumTest`, which compares two independent
+groups.
+
+```ruby
+test = RubyStatistics::StatisticalTest::WilcoxonSignedRankTest.new
+test.perform(0.05, :two_tail, before, after, zero_method: :pratt)
+```
+
+* `zero_method: :wilcoxon` discards zero differences before ranking;
+  `zero_method: :pratt` keeps them in the ranking (they occupy the lowest rank
+  positions) but they contribute nothing to the statistic. The same convention
+  is applied to the test, the Hodges-Lehmann estimate and the acceptance set.
+* Tied absolute differences get midranks; the exact null distribution is built
+  by dynamic programming over the actual (possibly tied) ranks, scaled by 2 so
+  half-integer ranks become integers. A no-ties table is never used when ties
+  are present. One-sided and two-sided exact p-values are reported; a
+  tie-corrected normal approximation is available via `method: :normal`.
+* The result includes the Hodges-Lehmann estimate (median of the Walsh
+  averages) and the acceptance set obtained by inverting the same test.
+  `acceptance_set` is the exact set of accepted location shifts (a list of
+  components); `confidence_interval` is only its interval envelope: when
+  `acceptance_gaps` is true the envelope contains small rejected gaps, so it
+  is conservative (true coverage is at least the nominal confidence level).
+
 ## Documentation
 You can find a bit more detailed documentation of all available distributions, tests and functions in the [Documentation Index](https://github.com/estebanz01/ruby-statistics/wiki)
 
