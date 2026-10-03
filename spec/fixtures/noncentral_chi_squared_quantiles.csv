@@ -1,0 +1,35 @@
+# Noncentral chi-squared reference vectors for
+# RubyStatistics::Distribution::NoncentralChiSquared.
+# Source: generated offline by spec/fixtures/noncentral_chi_squared_reference.py
+# using mpmath 1.3.0 at 50 significant decimal digits; cross-checked against
+# scipy 1.17.1 (scipy.stats.ncx2): CDF/SF agree to < 1e-9 relative; scipy's
+# ppf deviates up to 2.3e-6 relative at extreme tail probabilities
+# (p >= 0.99999999), where the 50-digit mpmath values are authoritative
+# (self-consistent to ~1e-21 when the CDF is evaluated at the quantile).
+# Probabilities p are interpreted as IEEE 754 doubles (the same
+# value the Ruby spec parses from this file).
+# Printed with 17 significant digits (round-trips an IEEE 754 double).
+# Generated: 2026-10-03.
+# columns: degrees_of_freedom,noncentrality,p,quantile
+degrees_of_freedom,noncentrality,p,quantile
+2,0.5,0.5,1.7594056499612907
+2,0.5,0.9,5.7250803874274952
+2,0.5,0.99,11.216469467822425
+2,0.5,0.999999,32.226829820683144
+2,0.5,0.0001,0.00025681744956306647
+2,0.5,0.00000001,2.5680508457408926e-8
+3.7,2.5,0.1,1.7074055296990915
+3.7,2.5,0.5,5.3364461274838134
+3.7,2.5,0.95,14.226982760002726
+3.7,2.5,0.99999999,56.986850625056259
+3.7,2.5,0.0000000001,2.0910101878313508e-5
+10.25,7.75,0.5,17.12989601949647
+10.25,7.75,0.999,47.49994525713279
+10.25,7.75,0.999999999999,112.49551437418192
+10.25,7.75,0.000001,0.77563769873314677
+4,100,0.5,103.00495541526163
+4,100,0.9999,191.71352379709977
+4,100,0.000001,29.674838458634306
+6,500,0.5,505.00166035640463
+6,500,0.99999,714.3711685579042
+6,500,0.00000000000000000000000000000000000000000000000001,57.916688541695893

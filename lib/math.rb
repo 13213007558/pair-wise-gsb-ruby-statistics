@@ -110,6 +110,60 @@ module Math
     (Math.gamma(x) * Math.gamma(y))/Math.gamma(x + y)
   end
 
+  # Regularised upper incomplete gamma function Q(s, x) = Gamma(s, x) / Gamma(s).
+
+  # For x >= s + 1 it evaluates Legendre's continued fraction directly, so the
+  # upper tail is computed without the numerically dangerous complement
+  # subtraction 1 - P(s, x). For x < s + 1 the lower-tail series above is the
+  # better conditioned branch and Q is obtained as its complement.
+
+  # Continued fraction evaluated with the modified Lentz method, following
+  # Press, Teukolsky, Vetterling and Flannery, "Numerical Recipes", 3rd ed.,
+  # section 6.2.
+
+  # Returns nil when the continued fraction does not converge.
+  def self.normalised_upper_incomplete_gamma_function(s, x)
+    return if s.negative? || x.negative?
+    return 1.0 if x.zero?
+
+    if x < s + 1.0
+      lower = normalised_lower_incomplete_gamma_function(s, x)
+      return if lower.nil?
+
+      return 1.0 - lower
+    end
+
+    tiny = 1.0e-300
+    epsilon = 1.0e-15
+    max_iterations = 10_000
+
+    b = x + 1.0 - s
+    c = 1.0 / tiny
+    d = 1.0 / b
+    h = d
+
+    (1..max_iterations).each do |i|
+      an = -i * (i - s)
+      b += 2.0
+
+      d = an * d + b
+      d = tiny if d.abs < tiny
+      c = b + an / c
+      c = tiny if c.abs < tiny
+
+      d = 1.0 / d
+      delta = d * c
+      h *= delta
+
+      if (delta - 1.0).abs < epsilon
+        log_prefactor = -x + s * Math.log(x) - Math.lgamma(s)[0]
+        return Math.exp(log_prefactor) * h
+      end
+    end
+
+    nil
+  end
+
   ### This implementation is an adaptation of the incomplete beta function made in C by
   ### Lewis Van Winkle, which released the code under the zlib license.
   ### The whole math behind this code is described in the following post: https://codeplea.com/incomplete-beta-function-c

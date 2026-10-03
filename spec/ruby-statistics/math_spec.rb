@@ -180,4 +180,44 @@ describe Math do
       end
     end
   end
+
+  describe '.normalised_upper_incomplete_gamma_function' do
+    it 'is not defined for negative parameters or negative x' do
+      expect(described_class.normalised_upper_incomplete_gamma_function(-1, 1)).to be_nil
+      expect(described_class.normalised_upper_incomplete_gamma_function(1, -1)).to be_nil
+    end
+
+    it 'returns one for x equal to zero' do
+      expect(described_class.normalised_upper_incomplete_gamma_function(2.5, 0)).to eq 1.0
+    end
+
+    it 'reduces to exp(-x) for s equal to 1' do
+      [0.5, 2.0, 7.0].each do |x|
+        expect(described_class.normalised_upper_incomplete_gamma_function(1, x))
+          .to be_within(1.0e-13).of(Math.exp(-x))
+      end
+    end
+
+    it 'reduces to exp(-x) * (1 + x) for s equal to 2' do
+      [0.5, 2.0, 7.0].each do |x|
+        expect(described_class.normalised_upper_incomplete_gamma_function(2, x))
+          .to be_within(1.0e-13).of(Math.exp(-x) * (1.0 + x))
+      end
+    end
+
+    it 'complements the normalised lower incomplete gamma function' do
+      [[0.5, 0.3], [1.5, 2.0], [5.0, 4.0], [30.0, 40.0]].each do |s, x|
+        lower = described_class.normalised_lower_incomplete_gamma_function(s, x)
+        upper = described_class.normalised_upper_incomplete_gamma_function(s, x)
+
+        expect(lower + upper).to be_within(1.0e-12).of(1.0)
+      end
+    end
+
+    it 'stays accurate deep in the upper tail where 1 - P would cancel out' do
+      # Q(5, 30) = 3.624300952061488e-9 (mpmath, 50 digits)
+      expect(described_class.normalised_upper_incomplete_gamma_function(5, 30))
+        .to be_within(1.0e-13 * 3.624300952061488e-9).of(3.624300952061488e-9)
+    end
+  end
 end
