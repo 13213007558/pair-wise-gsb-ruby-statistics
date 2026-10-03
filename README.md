@@ -58,6 +58,33 @@ poisson = Distribution::Poisson.new(l) # Using Distribution alias.
 normal = RubyStatistics::Distribution::StandardNormal.new # Using all namespaces.
 ```
 
+### Fisher exact test
+`RubyStatistics::StatisticalTest::FisherExactTest.perform` supports small R x C tables of
+non-negative integers. Rows and columns whose margins are zero are removed for enumeration,
+and their original indices are returned in `row_indices` and `column_indices`. The two-sided
+p-value includes every fixed-margin table whose conditional probability is no greater than
+the observed table's probability.
+
+```ruby
+result = RubyStatistics::StatisticalTest::FisherExactTest.perform(
+  [[3, 1], [1, 3]],
+  max_states: 10_000,
+  tolerance: 0.0
+)
+
+result[:observed_probability] # Rational probability of the observed table
+result[:p_value]              # nil when the search is incomplete
+result[:accumulated_probability]
+result[:status]               # :complete or :incomplete
+```
+
+The implementation compares exact integer factorial weights, so factorials cannot overflow
+and probabilities are returned as `Rational`. The default `tolerance` is `0.0` (exact
+comparison). A positive tolerance admits a candidate when
+`candidate_probability <= observed_probability + tolerance * max(1, observed_probability.abs)`.
+When `max_states` is reached before all fixed-margin tables are visited, `p_value` is `nil`;
+only the accumulated probability mass of the searched states is returned.
+
 ## Documentation
 You can find a bit more detailed documentation of all available distributions, tests and functions in the [Documentation Index](https://github.com/estebanz01/ruby-statistics/wiki)
 
