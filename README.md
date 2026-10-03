@@ -58,6 +58,24 @@ poisson = Distribution::Poisson.new(l) # Using Distribution alias.
 normal = RubyStatistics::Distribution::StandardNormal.new # Using all namespaces.
 ```
 
+### Wilcoxon signed-rank test
+For paired observations, pass either the paired differences or the two samples. The exact null distribution is built dynamically after assigning average ranks to tied absolute differences, so no no-tie table is used when ties are present.
+
+```ruby
+test = StatisticalTest::WilcoxonSignedRankTest.new
+result = test.perform(0.05, :two_tail, before, after)                 # discards zero differences
+result = test.perform(0.05, :two_tail, differences, nil, :pratt)     # Pratt's rule
+
+result[:p_value]                  # exact two-sided p-value (Rational)
+result[:greater_p_value]          # exact one-sided p-value for location > 0
+result[:less_p_value]             # exact one-sided p-value for location < 0
+result[:point_estimate]           # Hodges-Lehmann/Walsh-average location estimate
+result[:acceptance_set]           # exact union of intervals accepted by test inversion
+result[:confidence_interval]      # envelope from the minimum to maximum accepted value
+```
+
+The envelope is conservative. If `result[:confidence_interval][:envelope_contains_rejected_gaps]` is true, it spans one or more small points or gaps that are rejected in the exact `acceptance_set`.
+
 ## Documentation
 You can find a bit more detailed documentation of all available distributions, tests and functions in the [Documentation Index](https://github.com/estebanz01/ruby-statistics/wiki)
 
