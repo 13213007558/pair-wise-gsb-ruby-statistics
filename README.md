@@ -58,6 +58,25 @@ poisson = Distribution::Poisson.new(l) # Using Distribution alias.
 normal = RubyStatistics::Distribution::StandardNormal.new # Using all namespaces.
 ```
 
+### Poisson-binomial distribution
+
+Use `Distribution::PoissonBinomial` for independent Bernoulli trials with different success probabilities. An empty array is a point mass at zero, while probabilities equal to zero and one remain deterministic support shifts.
+
+```ruby
+require 'ruby-statistics'
+
+poisson_binomial = Distribution::PoissonBinomial.new([0.1, 0.25, 0.9])
+poisson_binomial.probability_mass_function(2) # P(X = 2)
+poisson_binomial.cumulative_function(1)       # P(X <= 1)
+poisson_binomial.survival_function(1)         # P(X > 1), accumulated as its own tail
+poisson_binomial.quantile(0.75)               # Smallest k with P(X <= k) >= 0.75
+poisson_binomial.log_survival_function(1)     # Useful for extremely small tails
+```
+
+The PMF, CDF and right tail are calculated by an `O(n^2)` log-space dynamic program with `O(n)` memory. After initialization, PMF, CDF and survival queries are `O(1)`, and quantile lookup is `O(log n)`. This exact method is practical for hundreds to a few thousand probabilities; substantially larger inputs should use an approximation.
+
+The non-log probability methods return zero once a result is smaller than the smallest positive `Float` (`Float::MIN`, approximately `4.94e-324`). The `log_probability_mass_function`, `log_cumulative_function` and `log_survival_function` methods retain such tiny probabilities directly, without subtracting a rounded CDF from one.
+
 ## Documentation
 You can find a bit more detailed documentation of all available distributions, tests and functions in the [Documentation Index](https://github.com/estebanz01/ruby-statistics/wiki)
 
