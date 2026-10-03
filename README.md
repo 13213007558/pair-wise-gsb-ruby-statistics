@@ -61,6 +61,48 @@ normal = RubyStatistics::Distribution::StandardNormal.new # Using all namespaces
 ## Documentation
 You can find a bit more detailed documentation of all available distributions, tests and functions in the [Documentation Index](https://github.com/estebanz01/ruby-statistics/wiki)
 
+### Bounded kernel density estimation
+
+Samples that live on a finite interval make a plain Gaussian KDE leak
+probability mass outside the support. `Distribution::BoundedKernelDensity`
+avoids this with the reflection (method of images) technique: every
+observation `x` on `[lower, upper]` (of length `L`) is mirrored to
+`x + 2*k*L` and `2*lower - x + 2*k*L` for integer `k`, and the truncated
+mirror sum is renormalised so the density integrates to exactly one on the
+interval and is zero outside of it.
+
+```ruby
+kde = Distribution::BoundedKernelDensity.new(
+  [0.2, 0.4, 0.5, 0.7, 0.9],
+  lower: 0.0, upper: 1.0,
+  bandwidth: 0.15 # or bandwidth: :loo, bandwidth_interval: [0.01, 0.5]
+)
+
+kde.density_function(0.5)   # density, 0.0 outside [lower, upper]
+kde.cumulative_function(2)  # => 1.0, exactly 0 below lower and 1 above upper
+kde.probability(0.2, 0.6)   # interval probability, clipped to the support
+```
+
+The infinite mirror series is truncated to `|k| <= reflections` and the
+omitted tail is bounded explicitly. `kde.truncation_error` returns the
+bounds: with `e_d` the omitted density per observation, `e_m` the omitted
+mass, `Z` the normalisation and `f`/`F` the returned density/CDF, the
+infinite-mirror values `f*`/`F*` satisfy
+`|f* - f| <= (e_d + f * e_m) / Z` and `|F* - F| <= 2 * e_m / Z`.
+Interval probabilities inherit twice the cumulative bound. The number of
+reflections is chosen automatically from `tolerance:` (default `1e-10`) or
+can be forced with `reflections:`.
+
+With `bandwidth: :loo`, the bandwidth maximises the leave-one-out
+log-likelihood over the caller supplied positive `bandwidth_interval`.
+Each left-out observation is removed together with all of its mirror
+images. The search (golden section plus an explicit comparison against the
+interval edges) does not guarantee a unique interior optimum:
+`kde.diagnostics` and the returned `BandwidthSelection` report duplicate
+observations (ties inflate the score at small bandwidths), observations
+exactly on the boundaries, and optima lying at the edges of the search
+interval (`at_lower_bound?` / `at_upper_bound?`, `interior_optimum?`).
+
 ## Development
 
 After checking out the repo, run `bin/setup` to install dependencies. Then, run `rake spec` to run the tests. You can also run `bin/console` for an interactive prompt that will allow you to experiment.
