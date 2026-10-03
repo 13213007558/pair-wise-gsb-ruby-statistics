@@ -58,6 +58,43 @@ poisson = Distribution::Poisson.new(l) # Using Distribution alias.
 normal = RubyStatistics::Distribution::StandardNormal.new # Using all namespaces.
 ```
 
+### Multivariate Normal Rectangular Probability
+
+`MultivariateNormal#rectangular_probability` computes `P(lower_bound <= X <= upper_bound)` for multivariate normal vectors. The current supported dimension is one through six; no external linear-algebra service is required.
+
+```ruby
+require 'ruby-statistics'
+
+distribution = RubyStatistics::Distribution::MultivariateNormal.new(
+  [0.0, 0.0],
+  [[1.0, 0.5], [0.5, 1.0]]
+)
+
+result = distribution.rectangular_probability(
+  lower_bound: [0.0, 0.0],
+  upper_bound: [Float::INFINITY, Float::INFINITY],
+  error_budget: 0.0001,
+  confidence_level: 0.95,
+  seed: 12345,
+  max_samples: 100_000
+)
+
+result.probability        # Estimated or exact probability
+result.estimated_error    # Statistical error convention for randomized results
+result.confidence_level   # Wilson score confidence level for randomized results
+result.budget_exhausted   # true when max_samples is reached before the budget is met
+result.strict_error_bound # true only for deterministic closed-form/special-case results
+result.random_seed        # Seed used by randomized integration
+result.samples_used       # Number of Monte Carlo samples used
+result.rank               # Numerical rank of the covariance matrix
+result.rank_deficient     # true when rank is below dimension
+result.near_singular      # true for rank deficiency or a condition number above 1e10
+```
+
+Boundaries may be finite or `Float::INFINITY`/`-Float::INFINITY`. Zero-variance coordinates are handled as point constraints: the probability is zero when the mean is outside the corresponding interval. Tiny positive variance remains a valid near-singular full-rank coordinate. Rank-deficient covariance matrices are supported without adding diagonal noise; the covariance is decomposed with an internal Jacobi eigendecomposition and probability is computed on the Gaussian support. Tiny negative eigenvalues below the numerical PSD tolerance are treated as zero; materially negative eigenvalues raise `MultivariateNormal::NonPositiveSemidefiniteError`.
+
+Independent variables use the product of univariate normal CDFs, fully correlated rank-one distributions use an interval on the single random direction, and two-dimensional events use the Gaussian quadrant formula plus deterministic adaptive quadrature. Other low-dimensional cases use seeded Monte Carlo on the linear Gaussian representation. Monte Carlo errors are Wilson score-interval half-widths at the requested confidence level, not deterministic or strict upper bounds; `budget_exhausted` is set whenever the available sample count cannot meet `error_budget`.
+
 ## Documentation
 You can find a bit more detailed documentation of all available distributions, tests and functions in the [Documentation Index](https://github.com/estebanz01/ruby-statistics/wiki)
 
