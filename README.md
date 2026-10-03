@@ -58,6 +58,53 @@ poisson = Distribution::Poisson.new(l) # Using Distribution alias.
 normal = RubyStatistics::Distribution::StandardNormal.new # Using all namespaces.
 ```
 
+### Bounded kernel density estimation
+
+`BoundedKDE` estimates a density on a finite interval using a Gaussian kernel
+with reflected images. The image series is truncated only when a geometric tail
+bound shows that the omitted-image contribution is below `mirror_tolerance`.
+
+```ruby
+kde = RubyStatistics::Distribution::BoundedKDE.new(
+  samples: [0.05, 0.4, 0.4, 0.95],
+  lower_bound: 0.0,
+  upper_bound: 1.0,
+  bandwidth: 0.1
+)
+
+kde.density(0.2)
+kde.cumulative_function(0.2)
+kde.interval_probability(0.2, 0.8)
+kde.density(0.2, error: true)
+# => { value: ..., truncation_error_bound: ... }
+```
+
+Pass `bandwidth_bounds:` instead of `bandwidth:` to maximize mean
+leave-one-out log density. Each held-out observation is removed together with
+all of its reflected images. The returned `fit_report` exposes the evaluated
+score, its propagated truncation-error bound, optimizer metadata, duplicate and
+endpoint observations, and warnings when the selected bandwidth is near either
+search bound. The search is a bounded heuristic; it does not guarantee a unique
+interior global optimum:
+
+```ruby
+fitted = RubyStatistics::Distribution::BoundedKDE.fit(
+  samples: [0.05, 0.4, 0.4, 0.95],
+  lower_bound: 0.0,
+  upper_bound: 1.0,
+  bandwidth_bounds: [0.01, 0.5]
+)
+
+fitted.bandwidth
+fitted.fit_report
+```
+
+The density integrates to one over `lower_bound..upper_bound`; density is zero
+outside that interval and the CDF is fixed at zero and one at or beyond its
+edges. Exact whole-interval probability is returned as one, while interior
+results include a provable bound on omitted mirrored images when `error: true`
+is used.
+
 ## Documentation
 You can find a bit more detailed documentation of all available distributions, tests and functions in the [Documentation Index](https://github.com/estebanz01/ruby-statistics/wiki)
 
