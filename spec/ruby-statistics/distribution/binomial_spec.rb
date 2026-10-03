@@ -41,6 +41,22 @@ describe RubyStatistics::Distribution::Binomial do
         expect(binomial.cumulative_function(number)).to be_within(0.00000001).of(results[index])
       end
     end
+
+    context 'with a deterministic probability' do
+      it 'returns a point-mass CDF for probability zero' do
+        binomial = described_class.new(3, 0.0)
+
+        expect(binomial.cumulative_function(0)).to eq(1.0)
+        expect(binomial.cumulative_function(1)).to eq(1.0)
+      end
+
+      it 'returns a point-mass CDF for probability one' do
+        binomial = described_class.new(3, 1.0)
+
+        expect(binomial.cumulative_function(2)).to eq(0.0)
+        expect(binomial.cumulative_function(3)).to eq(1.0)
+      end
+    end
   end
 
   describe '#mean' do

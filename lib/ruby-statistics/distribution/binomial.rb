@@ -18,6 +18,9 @@ module RubyStatistics
       def cumulative_function(k)
         return if k < 0 || k > number_of_trials
         k = k.to_i
+        return 1.0 if probability_per_trial.zero?
+        return 1.0 if probability_per_trial == 1 && k == number_of_trials
+        return 0.0 if probability_per_trial == 1
 
         p = 1 - probability_per_trial
         Math.incomplete_beta_function(p, number_of_trials - k, 1 + k)
