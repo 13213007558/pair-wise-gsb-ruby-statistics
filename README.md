@@ -58,6 +58,59 @@ poisson = Distribution::Poisson.new(l) # Using Distribution alias.
 normal = RubyStatistics::Distribution::StandardNormal.new # Using all namespaces.
 ```
 
+### Bernoulli confidence sequence (anytime-valid)
+
+For a dashboard that refreshes every time a success or a failure arrives,
+`RubyStatistics::ConfidenceSequence::BernoulliConfidenceSequence` reports an
+interval that is valid simultaneously for every observed prefix, not just for
+one fixed sample size.
+
+```ruby
+require 'ruby-statistics'
+
+cs = RubyStatistics::ConfidenceSequence::BernoulliConfidenceSequence.new(
+  alpha: 0.05, # miscoverage level, paid once for the whole path
+  prior: [     # pre-specified Beta mixture (weights are normalized once)
+    { alpha_prior: 1.0, beta_prior: 1.0, weight: 1.0 },
+    { alpha_prior: 0.5, beta_prior: 0.5, weight: 1.0 }
+  ]
+)
+
+cs.success!          # one success, then read the refreshed interval
+cs.failure!(2)       # two failures
+result = cs.result   # recomputes for the current prefix, never reuses an old interval
+result.lower         # => lower endpoint
+result.upper         # => upper endpoint
+result.sample_count  # => 3
+result.config        # => { alpha:, prior: } frozen, cannot change after observing data
+```
+
+How it works: the pre-specified Beta mixture builds a likelihood-ratio
+e-process that is a non-negative (super)martingale under any fixed Bernoulli
+probability. Ville's inequality gives
+
+```
+P( exists n >= 0 : true probability is outside the n-th interval ) <= alpha
+```
+
+so the guarantee is on the **entire time path** and peeking at the dashboard
+at arbitrary times costs nothing extra. Keep in mind:
+
+* Only the success/failure counts are stored; all computations run in the log
+  domain, and all successes, all failures and the boundary probabilities
+  `p = 0` / `p = 1` are handled explicitly.
+* The Beta mixture is only a device to construct the martingale. This is a
+  **frequentist confidence sequence**, not a Bayesian credible interval; do
+  not interpret the prior or the output as posterior probabilities.
+* The configuration (`alpha` and the mixture) must be chosen **before**
+  seeing data. It is normalized once at construction and frozen; it cannot
+  silently change as observations arrive.
+* A fixed-seed coverage simulation is included in the specs as supplementary
+  evidence only. The mathematical guarantee comes from the supermartingale,
+  and the endpoint checks use high precision direct formulas.
+
+---
+
 ## Documentation
 You can find a bit more detailed documentation of all available distributions, tests and functions in the [Documentation Index](https://github.com/estebanz01/ruby-statistics/wiki)
 
