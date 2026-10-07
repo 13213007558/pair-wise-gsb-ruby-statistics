@@ -58,6 +58,28 @@ poisson = Distribution::Poisson.new(l) # Using Distribution alias.
 normal = RubyStatistics::Distribution::StandardNormal.new # Using all namespaces.
 ```
 
+### Minimum Covariance Determinant
+
+`RubyStatistics::MinimumCovarianceDeterminant.fit` estimates a robust location and scatter by finding an `h`-observation subset with minimum determinant covariance. Small problems are solved by exact enumeration; larger problems use deterministic, fixed-seed multi-start C-steps and return a search candidate rather than claiming verified optimality.
+
+```ruby
+data = [[0, 0], [1, 0], [0, 1], [1, 1], [10, 10]]
+
+raw = RubyStatistics::MinimumCovarianceDeterminant.fit(data)
+raw.support       # Original zero-based support indices
+raw.center
+raw.scatter
+raw.weights       # Hard 0/1 reweighting weights
+raw.optimality    # :global_optimum_verified or :search_candidate
+
+# Apply the explicit reweighting step using chi-squared p = 0.975.
+reweighted = RubyStatistics::MinimumCovarianceDeterminant.fit(data, reweight: true)
+reweighted.reweighted_center
+reweighted.reweighted_scatter
+```
+
+Set `h:` explicitly when needed; the default is `floor((n + p + 1) / 2)`. Singular data or insufficient `h` raises an error instead of adding synthetic noise.
+
 ## Documentation
 You can find a bit more detailed documentation of all available distributions, tests and functions in the [Documentation Index](https://github.com/estebanz01/ruby-statistics/wiki)
 
